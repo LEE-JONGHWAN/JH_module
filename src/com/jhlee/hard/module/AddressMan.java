@@ -98,8 +98,8 @@ public class AddressMan {
 		         } catch (SQLException e) {
 		         	e.printStackTrace();
 		         }
-		         System.out.println(lines + " 행 읽힘.");
-		         System.out.println(selectionCount + " 행 삽입됨.");
+//		         System.out.println(lines + " 행 읽힘.");
+//		         System.out.println(selectionCount + " 행 삽입됨.");
 	   } 
 
 		   
