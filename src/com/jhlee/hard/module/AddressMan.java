@@ -8,9 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class AddressMan {
@@ -47,7 +49,9 @@ public class AddressMan {
 
 				
 			case "additional":
+				System.out.println(LocalDateTime.now());
 				addressMan.largeAdditionalText();
+				System.out.println(LocalDateTime.now());
 				break;	
 				
 			default:
@@ -56,28 +60,63 @@ public class AddressMan {
 		}
 	}
 
-	private void largeAdditionalText() {
-		String file = "resources\\부가정보_경기도_utf_8.txt";
-		int lines = 0;
-		//@formatter:off
-		try (BufferedReader br = 
-				Files.newBufferedReader(Path.of(file))) { // v2-c2
-			String line = null;
-			int selectionCount = 0;
-			int printUnit = 5000;
-			while ((line = br.readLine()) != null ) {
-				if (++lines % printUnit == 0)
-					System.out.print(lines / printUnit + " ");
-			}
-			System.out.println(lines + " 행 읽힘.");
-			System.out.println(selectionCount + " 행 삽입됨.");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}		
-		//@formatter:off
+	   private void largeAdditionalText() {
+		      String file = "resources\\부가정보_경기도_utf_8.txt";
+		      int lines = 0;
+		      //@formatter:off
+		      try (BufferedReader br = 
+		            Files.newBufferedReader(Path.of(file))) { // v2-c2
+		         int selectionCount = 0;
+		         int printUnit = 5000;
+		         String sql = "select count(*) from 도로명주소 도 "
+		               + "where 도.관리번호= ?";
+		         var ps = conn.prepareStatement(sql);
+		         String line = null;
+		         while ((line = br.readLine()) != null ) {
+		            if (++lines % printUnit == 0) {
+		                  System.out.println(lines / printUnit + " ");
+		                  System.out.println(LocalDateTime.now());
+		            }
+		            String[] items;
+		            items = line.split("\\|", -1);
+		            ps.setString(1, items[0]);
+		            if (fKeyIn도로명주소(ps)) {
+		               selectionCount++;
+		            }
+		         }
+		         System.out.println(lines + " 행 읽힘.");
+		         System.out.println(selectionCount + " 행 삽입됨.");
+		      } catch (IOException e) {
+		         e.printStackTrace();
+		      }      
+		      //@formatter:on
+		      catch (SQLException e) {
+		         e.printStackTrace();
+		      }
+		   }
+	
+	/**
+	 * 관리번호 값 도로명주소 테이블 존재여부 판단
+	 * @param ps
+	 * @return 존재 때 true, 비 존재 때 false
+	 */
+	private boolean fKeyIn도로명주소(PreparedStatement ps) {
+	   // select count(*) from 도로명주소 도 
+	   // where 도.관리번호 = 4117310400112330000008128;
+	   boolean fkExists = false;
+	   
+	    try (ResultSet rs = ps.executeQuery()) {
+	       if (rs != null && rs.next()) {
+	               if (rs.getInt(1) > 0) {
+	                       fkExists = true;
+	               }
+	       }
+	   } catch (SQLException e) {
+	           e.printStackTrace();
+	   }
+	   return fkExists;
 	}
 
-	
 	/**
 	 * 큰 경기도 주소 텍스트 파일을 읽어서 수원 팔달구 해당 행들을 테이블로 삽입한다.
 	 */
